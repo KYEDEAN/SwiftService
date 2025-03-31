@@ -1,61 +1,82 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from rest_framework import generics, permissions
+# from rest_framework.response import Response
+# from rest_framework.views import APIView
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Service, Category, Skill
-from .forms import ServiceForm, CategoryForm, SkillForm
+from .models import Category, Skill, Service
+from .serializers import CategorySerializer, SkillSerializer, ServiceSerializer
 
-# Create your views here.
+# Category Views
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.AllowAny]
 
-def service_list(request):
-    services = Service.objects.filter(is_available=True)
-    return render(request, 'services/service_list.html', {'services': services})
 
-def service_detail(request, service_id):
-    service = get_object_or_404(Service, pk=service_id)
-    return render(request, 'services/service_detail.html', {'service': service})
+class CategoryDetailView(generics.RetrieveAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.AllowAny]
+
+
+# Skill Views
+class SkillListView(generics.ListAPIView):
+    serializer_class = SkillSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        category_id = self.kwargs.get('category_id')
+        return Skill.objects.filter(category_id=category_id)
+
+
+class SkillDetailView(generics.RetrieveAPIView):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+# Service Views
+class ServiceListView(generics.ListAPIView):
+    queryset = Service.objects.filter(is_available=True)
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class ServiceDetailView(generics.RetrieveAPIView):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class ServiceCreateView(generics.CreateAPIView):
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(provider=self.request.user)
+
+
+class ServiceUpdateView(generics.UpdateAPIView):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Service.objects.filter(provider=self.request.user)
+
+
+class ServiceDeleteView(generics.DestroyAPIView):
+    queryset = Service.objects.all()
+    serializer_class = ServiceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Service.objects.filter(provider=self.request.user)
+    
+from django.shortcuts import render
+from .models import Skill
 
 @login_required
-def create_service(request):
-    if request.method == 'POST':
-        form = ServiceForm(request.POST)
-        if form.is_valid():
-            service = form.save(commit=False)
-            service.provider = request.user
-            service.save()
-            messages.success(request, 'Service created successfully')
-            return redirect('service_detail', service_id=service.id)
-    else:
-        form = ServiceForm()
-    return render(request, 'services/create_service.html', {'form': form})
-
-@login_required
-def update_service(request, service_id):
-    service = get_object_or_404(Service, id=service_id, provider=request.user)
-
-    if request.method == 'POST':
-        form = ServiceForm(request.POST, instance=service)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Service updated successfully')
-            return redirect('service_detail', service_id=service.id)
-    else:
-        form = ServiceForm(instance=service)
-    return render(request, 'services/service_form.html', {'form': form})
-
-@login_required
-def delete_service(request, service_id):
-    service = get_object_or_404(Service, id=service_id, provider=request.user)
-    if request.method == 'POST':
-        service.delete()
-        messages.success(request, 'Service deleted successfully')
-        return redirect('service_list')
-    return render(request, 'services/service_confirm_delete.html', {'service': service})
-
-def category_list(request):
-    categories = Category.objects.all()
-    return render(request, 'services/category_list.html', {'categories': categories})
-
-def skill_list(request, category_id):
-    category = get_object_or_404(Category, id=category_id)
-    skills = Skill.objects.filter(category=category)
-    return render(request, 'services/skill_list.html', {'skills': skills})
+def create_service_form(request):
+    skills = Skill.objects.all()  # Fetch all skills to populate the dropdown
+    return render(request, 'services/templates/services/create_service.html', {'skills': skills})

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'services',
     'bookings',
+    'rest_framework',
     
 ]
 

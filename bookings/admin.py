@@ -5,7 +5,7 @@ from .models import Booking, BookingReview
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     def get_service(self, obj):
-        return obj.service.title
+        return obj.Service.title
     
     get_service.short_description = 'Service'
     list_display = ('id', 'get_service', 'customer', 'booking_date', 'status', 'created_at')

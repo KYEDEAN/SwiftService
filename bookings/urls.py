@@ -1,10 +1,17 @@
 from django.urls import path
-from . import views
+from .views import (
+    BookingListView, BookingDetailView, BookingCreateView, BookingCancelView,
+    BookingReviewCreateView, BookingReviewDetailView
+)
 
 urlpatterns = [
-    path('create/<int:service_id>/', views.create_booking, name='create_booking'),
-    path('', views.booking_list, name='booking_list'),
-    path('<int:booking_id>/', views.booking_detail, name='booking_detail'),
-    path('<int:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
-    path('<int:booking_id>/review/', views.create_review, name='create_review'),
+    # Booking URLs
+    path('', BookingListView.as_view(), name='booking_list'),  # List all bookings for the logged-in user
+    path('<int:pk>/', BookingDetailView.as_view(), name='booking_detail'),  # Retrieve a specific booking
+    path('create/', BookingCreateView.as_view(), name='create_booking'),  # Create a new booking
+    path('<int:pk>/cancel/', BookingCancelView.as_view(), name='cancel_booking'),  # Cancel a booking
+
+    # Booking Review URLs
+    path('<int:pk>/review/', BookingReviewCreateView.as_view(), name='create_review'),  # Create a review for a booking
+    path('review/<int:pk>/', BookingReviewDetailView.as_view(), name='review_detail'),  # Retrieve a specific review
 ]

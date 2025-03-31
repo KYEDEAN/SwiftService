@@ -1,60 +1,68 @@
-from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+from rest_framework import generics, permissions
+from rest_framework.exceptions import PermissionDenied
 from .models import Booking, BookingReview
-from .forms import BookingForm, BookingReviewForm
-from services.models import Service
+from .serializers import BookingSerializer, BookingReviewSerializer
 
-@login_required
-def create_booking(request, service_id):
-    service = get_object_or_404(Service, id=service_id)
-    if request.method == 'POST':
-        form = BookingForm(request.POST)
-        if form.is_valid():
-            booking = form.save(commit=False)
-            booking.customer = request.user
-            booking.service = service
-            booking.save()
-            messages.success(request, 'Booking created successfully')
-            return redirect('booking_detail', booking_id=booking.id)
-    else:
-        form = BookingForm()
-    return render(request, 'bookings/booking_form.html', {'form': form, 'service': service})
+# Booking Views
+class BookingListView(generics.ListAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-@login_required
-def booking_list(request):
-    bookings = Booking.objects.filter(customer=request.user)
-    return render(request, 'bookings/booking_list.html', {'bookings': bookings})
+    def get_queryset(self):
+        # Only return bookings for the logged-in user
+        return Booking.objects.filter(customer=self.request.user)
 
-@login_required
-def booking_detail(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id, customer=request.user)
-    return render(request, 'bookings/booking_detail.html', {'booking': booking})
 
-@login_required
-def cancel_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id, customer=request.user)
-    if request.method == 'POST':
-        booking.status = 'cancelled'
-        booking.save()
-        messages.success(request, 'Booking cancelled successfully')
-        return redirect('booking_detail')
-    return render(request, 'bookings/booking_cancel.html', {'booking': booking})
+class BookingDetailView(generics.RetrieveAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-@login_required
-def create_review(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id, customer=request.user, status='completed')
-    if request.method == 'POST':
-        form = BookingReviewForm(request.POST)
-        if form.is_valid():
-            review = form.save(commit=False)
-            review.booking = booking
-            review.save()
-            messages.success(request, 'Review created successfully')
-            return redirect('booking_detail', booking_id=booking.id)
-    else:
-        form = BookingReviewForm()
-    return render(request, 'bookings/review_form.html', {'form': form, 'booking': booking})
+    def get_queryset(self):
+        # Only allow access to the logged-in user's bookings
+        return Booking.objects.filter(customer=self.request.user)
+
+
+class BookingCreateView(generics.CreateAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Automatically set the customer to the logged-in user
+        serializer.save(customer=self.request.user)
+
+
+class BookingCancelView(generics.UpdateAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only allow the logged-in user to cancel their own bookings
+        return Booking.objects.filter(customer=self.request.user)
+
+    def perform_update(self, serializer):
+        # Set the status to 'cancelled'
+        if serializer.instance.status not in ['pending', 'confirmed']:
+            raise PermissionDenied("You can only cancel pending or confirmed bookings.")
+        serializer.save(status='cancelled')
+
+
+# Booking Review Views
+class BookingReviewCreateView(generics.CreateAPIView):
+    serializer_class = BookingReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        booking = serializer.validated_data['booking']
+        # Ensure the booking belongs to the logged-in user and is completed
+        if booking.customer != self.request.user or booking.status != 'completed':
+            raise PermissionDenied("You can only review completed bookings.")
+        serializer.save()
+
+
+class BookingReviewDetailView(generics.RetrieveAPIView):
+    serializer_class = BookingReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only allow access to reviews for the logged-in user's bookings
+        return BookingReview.objects.filter(booking__customer=self.request.user)

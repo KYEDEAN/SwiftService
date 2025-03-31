@@ -1,12 +1,26 @@
 from django.urls import path
-from . import views
+from .views import (
+    CategoryListView, CategoryDetailView,
+    SkillListView, SkillDetailView,
+    ServiceListView, ServiceDetailView, ServiceCreateView, 
+    ServiceUpdateView, ServiceDeleteView,create_service_form
+)
 
 urlpatterns = [
-    path('', views.service_list, name='service_list'),
-    path('<int:service_id>/', views.service_detail, name='service_detail'),
-    path('create/', views.create_service, name='create_service'),
-    path('<int:service_id>/update/', views.update_service, name='update_service'),
-    path('<int:service_id>/delete/', views.delete_service, name='delete_service'), 
-    path('categories/', views.category_list, name='category_list'),
-    path('category/<int:category_id>/', views.skill_list, name='skill_list'),
+    # Category URLs
+    path('categories/', CategoryListView.as_view(), name='category_list'),
+    path('categories/<int:pk>/', CategoryDetailView.as_view(), name='category_detail'),
+
+    # Skill URLs
+    path('categories/<int:category_id>/skills/', SkillListView.as_view(), name='skill_list'),
+    path('skills/<int:pk>/', SkillDetailView.as_view(), name='skill_detail'),
+
+    # Service URLs
+    path('services/', ServiceListView.as_view(), name='service_list'),
+    path('services/<int:pk>/', ServiceDetailView.as_view(), name='service_detail'),
+    path('services/create/', ServiceCreateView.as_view(), name='create_service'),
+    path('services/create/form/', create_service_form, name='create_service_form'),
+
+    path('services/<int:pk>/update/', ServiceUpdateView.as_view(), name='update_service'),
+    path('services/<int:pk>/delete/', ServiceDeleteView.as_view(), name='delete_service'),
 ]

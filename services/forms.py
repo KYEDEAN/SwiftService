@@ -17,4 +17,7 @@ class SkillForm(forms.ModelForm):
         fields = ['name', 'category', 'description']
 
 
+
+
+
         
