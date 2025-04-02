@@ -28,3 +28,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+bookings/migrations/
+services/migrations/
+users/migrations/
+swiftservice/settings.py
+swiftservice/urls.py
