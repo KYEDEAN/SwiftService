@@ -129,4 +129,6 @@ import { ref } from 'vue';
     margin-bottom: 10px;
   }
 }
+
+
 </style>

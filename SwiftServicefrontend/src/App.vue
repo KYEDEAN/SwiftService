@@ -23,6 +23,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #f8f9fa;
   color: #333;
+  padding-top: 80px;
 }
 
 .container {

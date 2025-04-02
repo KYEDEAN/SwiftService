@@ -51,7 +51,13 @@ console.log("Fetched Services:", services.value);
 .hero {
   background-color:#3399FF;
   color: white;
+  
 }
+
+.main-content {
+  margin-top: 80px; 
+}
+
 
 .featured-services {
   background-color: #f8f9fa;

@@ -3,6 +3,7 @@
     <h2 class="text-center">Our Services</h2>
     <div class="row mt-4">
       <ServiceCard v-for="service in services" :key="service.id" :service="service" />
+      
     </div>
   </div>
 </template>
