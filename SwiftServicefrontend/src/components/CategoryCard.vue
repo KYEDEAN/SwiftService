@@ -11,13 +11,10 @@
     </div>
   </template>
   
-  <script>
-  export default {
-    props: {
-      category: Object,
-    },
-  };
+  <script setup>
+  defineProps(["category"]);
   </script>
+  
   
   <style scoped>
   .card {

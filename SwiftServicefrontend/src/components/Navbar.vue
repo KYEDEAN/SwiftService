@@ -1,7 +1,10 @@
 <template>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container">
-        <router-link class="navbar-brand" to="/">SwiftService</router-link>
+        <router-link class="navbar-brand" to="/">
+          <img src="@/assets/logo1.jpg" alt="SwiftService" class="logo"/>
+        </router-link>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -34,16 +37,22 @@
     </nav>
   </template>
   
-  <script>
-  export default {
-    name: "Navbar"
-  };
-  </script>
+  <script setup>
+  import { ref } from 'vue';
   
+  </script>
+
+
   <style>
   .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
     color: white !important;
   }
+
+  .logo {
+  width: 200px; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: contain; /* Ensures the image fits without distorting */
+}
   </style>

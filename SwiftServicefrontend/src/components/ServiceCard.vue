@@ -12,13 +12,10 @@
     </div>
   </template>
   
-  <script>
-  export default {
-    props: {
-      service: Object,
-    },
-  };
+  <script setup>
+  defineProps(["service"]);
   </script>
+  
   
   <style scoped>
   .card {

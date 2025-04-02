@@ -1,6 +1,5 @@
 <template>
     <div>
-      
       <section class="hero bg-primary text-white py-5">
         <div class="container text-center">
           <h1 class="display-4">Welcome to SwiftService</h1>
@@ -29,35 +28,28 @@
     </div>
   </template>
   
-  <script>
-  import { useServiceStore } from '../stores/serviceStore'; 
-  import ServiceCard from '../components/ServiceCard.vue';  
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getCategories, getServices } from '../services/api.js';
+import CategoryCard from '../components/CategoryCard.vue';
+import ServiceCard from '../components/ServiceCard.vue';
+
+const categories = ref([]); // 
+const services = ref([]); 
+
+onMounted(async () => {
+  console.log("Fetching services...");
+  categories.value= await getCategories();
+  services.value = await getServices();
+  console.log("Fetched Services:", services.value); 
+});
+
+</script>
+
   
-  export default {
-    components: {
-      ServiceCard,
-    },
-    data() {
-      return {
-        services: [], 
-      };
-    },
-    created() {
-      this.loadServices();
-    },
-    methods: {
-      loadServices() {
-        const serviceStore = useServiceStore();
-        serviceStore.loadServices();  
-        this.services = serviceStore.services;  
-      },
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .hero {
-    background-color: #007bff;
+<style scoped>
+.hero {
+    background-color:#3399FF;
     color: white;
   }
   

@@ -7,26 +7,24 @@
     </div>
   </template>
   
-  <script>
-  import CategoryCard from '../components/CategoryCard.vue';
+
+  <script setup>
+import { ref, onMounted } from 'vue';
+import CategoryCard from '../components/CategoryCard.vue';
+import { getCategories } from '../services/api.js';
+
+const categories = ref([]);
+
+onMounted(async () => {
+  try {
+    categories.value = await getCategories();
+    console.log("Fetched categories:", categories.value);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+  }
+});
+</script>
   
-  export default {
-    components: {
-      CategoryCard,
-    },
-    data() {
-      return {
-        categories: [
-          { id: 1, name: 'Home Services', image: 'home-services.jpg' },
-          { id: 2, name: 'Automobile', image: 'automobile.jpg' },
-          { id: 3, name: 'Health & Wellness', image: 'health.jpg' },
-          { id: 4, name: 'Electronics Repair', image: 'electronics.jpg' },
-          { id: 5, name: 'Beauty & Salon', image: 'salon.jpg' }
-        ]
-      };
-    }
-  };
-  </script>
   
   <style>
   .container {

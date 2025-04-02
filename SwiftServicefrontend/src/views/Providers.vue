@@ -15,21 +15,19 @@
       </div>
     </div>
   </template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getProviders } from '../services/api.js';
+
+const providers = ref([]);
+
+onMounted(async () => {
+  providers.value = await getProviders();
+});
+</script>
   
-  <script>
-  export default {
-    data() {
-      return {
-        providers: [
-          { id: 1, name: 'Ram Shrestha', service: 'Plumbing', location: 'Kathmandu', image: 'provider1.jpg' },
-          { id: 2, name: 'Sita Gurung', service: 'Home Cleaning', location: 'Lalitpur', image: 'provider2.jpg' },
-          { id: 3, name: 'Bikash Thapa', service: 'Electrical Repair', location: 'Bhaktapur', image: 'provider3.jpg' }
-        ]
-      };
-    }
-  };
-  </script>
-  
+ 
   <style>
   .card img {
     width: 100px;
