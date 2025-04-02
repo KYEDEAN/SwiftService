@@ -34,3 +34,5 @@ services/migrations/
 users/migrations/
 swiftservice/settings.py
 swiftservice/urls.py
+
+!SwiftServicefrontend/
