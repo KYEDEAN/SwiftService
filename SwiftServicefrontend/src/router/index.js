@@ -1,56 +1,74 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import Home from '@/views/Home.vue';
-import Services from '@/views/Services.vue';
-import ServiceDetail from '@/views/ServiceDetail.vue';
-import Categories from '@/views/Categories.vue';
-import Providers from '@/views/Providers.vue';
-import About from '@/views/About.vue';
-import Contact from '@/views/Contact.vue';
-import Login from '@/views/Login.vue';
-import Register from '@/views/Register.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '../views/Home.vue'
+import Services from '../views/Services.vue'
+import ServiceDetails from '../views/ServiceDetail.vue'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+import ProviderRegistration from '../views/ProviderRegistration.vue'
+import Profile from '../views/Profile.vue'
 
 const routes = [
-  { 
-    path: '/', 
-    component: Home 
+  {
+    path: '/',
+    name: 'Home',
+    component: Home
   },
-  { 
-    path: '/services', 
-    component: Services 
+  {
+    path: '/services',
+    name: 'Services',
+    component: Services
   },
-  { 
-    path: '/services/:id', 
-    component: ServiceDetail 
+  {
+    path: '/services/:id',
+    name: 'ServiceDetails',
+    component: ServiceDetails
   },
-  { 
-    path: '/categories', 
-    component: Categories 
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
   },
-  { 
-    path: '/providers', 
-    component: Providers 
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
   },
-  { 
-    path: '/about', 
-    component: About 
+  {
+    path: '/provider-registration',
+    name: 'ProviderRegistration',
+    component: ProviderRegistration
   },
-  { 
-    path: '/contact', 
-    component: Contact 
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: { requiresAuth: true }
   },
-  { 
-    path: '/login', 
-    component: Login 
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('../views/About.vue')
   },
-  { 
-    path: '/register', 
-    component: Register 
-  },
-];
+]
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-});
+  scrollBehavior() {
+    return { top: 0 }
+  }
+})
 
-export default router;
+// Navigation guard to check for authentication
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem('token')
+  
+  if (to.matched.some(record => record.meta.requiresAuth) && !isAuthenticated) {
+    // Redirect to login if trying to access a protected route without authentication
+    next({ path: '/login', query: { redirect: to.fullPath } })
+  } else {
+    next()
+  }
+})
+
+export default router
