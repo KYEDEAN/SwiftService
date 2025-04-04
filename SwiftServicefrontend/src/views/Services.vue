@@ -102,7 +102,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import ServiceCard from '../components/ServiceCard.vue';
-import { getServices, getCategories } from '../services/api';
+import { getServices, getCategories } from '../services/api.js';
 
 // Reactive references
 const loading = ref(true);
@@ -192,11 +192,6 @@ const extractPrice = (priceString) => {
 const fetchServices = async () => {
   loading.value = true;
   try {
-    // In a real app, this would fetch from your API
-    // const response = await getServices();
-    // services.value = response.data;
-
-    // For demo purposes:
     setTimeout(() => {
       services.value = [
         { id: 1, title: 'Plumbing Services', provider: 'John Plumber', providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg', categoryId: 2, categoryName: 'Home Repairs', rating: 4.8, reviews: 124, price: 'From Rs. 2,500/hr', image: 'https://via.placeholder.com/300x200?text=Plumbing' },
@@ -218,11 +213,6 @@ const fetchServices = async () => {
 
 const fetchCategories = async () => {
   try {
-    // In a real app, this would fetch from your API
-    // const response = await getCategories();
-    // categories.value = response.data;
-
-    // For demo purposes:
     categories.value = [
       { id: 1, name: 'Automobile', slug: 'automobile' },
       { id: 2, name: 'Home Repairs', slug: 'home-repairs' },
