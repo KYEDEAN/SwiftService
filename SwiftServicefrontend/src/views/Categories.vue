@@ -8,7 +8,7 @@
   </template>
   
 
-  <script setup>
+<script setup>
 import { ref, onMounted } from 'vue';
 import CategoryCard from '../components/CategoryCard.vue';
 import { getCategories } from '../services/api.js';

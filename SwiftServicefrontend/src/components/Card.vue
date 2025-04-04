@@ -9,15 +9,15 @@
     </div>
   </template>
   
-  <script>
-  export default {
-    props: {
-      title: {
-        type: String,
-        required: true
-      }
+  <script setup>
+  import { defineProps } from 'vue';
+  
+  defineProps({
+    title: {
+      type: String,
+      required: true
     }
-  };
+  });
   </script>
   
   <style scoped>
