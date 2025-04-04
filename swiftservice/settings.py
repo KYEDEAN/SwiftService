@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,8 +42,16 @@ INSTALLED_APPS = [
     'services',
     'bookings',
     'rest_framework',
-    
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5174',  # React frontend URL
+]
+
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development purposes
+CORS_ALLOW_CREDENTIALS = True  # Allow credentials (cookies, authorization headers, etc.) to be included in requests
+CORS_ALLOW_ALL_HEADERS = True  # Allow all headers in CORS requests
+CORS_ALLOW_ALL_METHODS = True  # Allow all HTTP methods in CORS requests
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
