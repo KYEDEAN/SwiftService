@@ -110,7 +110,7 @@
           <ServiceCard 
             v-for="service in featuredServices" 
             :key="service.id" 
-            :service="service" 
+            :service="service"的人员
           />
         </div>
       </div>
@@ -146,6 +146,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 import CategoryCard from '../components/CategoryCard.vue';
 import ServiceCard from '../components/ServiceCard.vue';
 
@@ -190,19 +191,18 @@ const handleSearch = () => {
 
 const fetchCategories = async () => {
   try {
-    categories.value = [
-      { id: 1, name: 'Automobile', icon: 'car', slug: 'automobile' },
-      { id: 2, name: 'Home Repairs', icon: 'tool', slug: 'home-repairs' },
-      { id: 3, name: 'Pet Care', icon: 'github', slug: 'pet-care' },
-      { id: 4, name: 'Professional Services', icon: 'briefcase', slug: 'professional' },
-      { id: 5, name: 'Health & Wellness', icon: 'heart', slug: 'health' },
-      { id: 6, name: 'Tech and Digital', icon: 'cpu', slug: 'tech' },
-      { id: 7, name: 'Personal Service', icon: 'user', slug: 'personal' },
-      { id: 8, name: 'Home Improvement', icon: 'home', slug: 'home-improvement' },
-      { id: 9, name: 'Professional Trainings', icon: 'book', slug: 'training' }
-    ];
+    const response = await axios.get('http://localhost:8000/services/categories/');
+    categories.value = response.data.map(category => ({
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      icon: category.icon || 'default-icon', // Use a fallback if icon is null
+      slug: category.name.toLowerCase().replace(/\s+/g, '-'),
+      skills: category.skills
+    }));
   } catch (error) {
     console.error('Error fetching categories:', error);
+    categories.value = [];
   }
 };
 
@@ -252,8 +252,8 @@ const fetchFeaturedServices = async () => {
 };
 
 // Fetch data on component mount
-onMounted(() => {
-  fetchCategories();
+onMounted(async () => {
+  await fetchCategories();
   fetchFeaturedServices();
 });
 </script>

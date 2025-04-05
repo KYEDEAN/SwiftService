@@ -1,14 +1,17 @@
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-
 from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .forms import CustomUserCreationForm, UserProfileForm, ServiceProviderForm
 from .models import CustomUser, UserProfile, ServiceProvider
-# Create your views here.
+from .serializers import CustomUserSerializer, UserProfileSerializer, ServiceProviderSerializer
 
+# Existing Template Views
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
     success_url = reverse_lazy('login')
@@ -18,7 +21,7 @@ class SignUpView(CreateView):
         user = form.save()
         login(self.request, user)
         return redirect('home')
-    
+
 @login_required
 def profile(request):
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
@@ -43,4 +46,41 @@ def service_provider_profile(request):
         form = ServiceProviderForm(instance=service_provider)
     return render(request, 'users/service_provider_profile.html', {'form': form})
 
-    #checking
+# API ViewSets
+class CustomUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_profile(self, request):
+        profile = UserProfile.objects.get(user=request.user)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+class ServiceProviderViewSet(viewsets.ModelViewSet):
+    queryset = ServiceProvider.objects.all()
+    serializer_class = ServiceProviderSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_service_profile(self, request):
+        profile = ServiceProvider.objects.get(user=request.user)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)

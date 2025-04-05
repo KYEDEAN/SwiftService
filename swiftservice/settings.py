@@ -54,6 +54,8 @@ CORS_ALLOW_ALL_HEADERS = True  # Allow all headers in CORS requests
 CORS_ALLOW_ALL_METHODS = True  # Allow all HTTP methods in CORS requests
 
 MIDDLEWARE = [
+    # CORS Middleware
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

@@ -98,11 +98,12 @@
     </div>
   </main>
 </template>
+
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import axios from 'axios';
 import ServiceCard from '../components/ServiceCard.vue';
-import { getServices, getCategories } from '../services/api.js';
 
 // Reactive references
 const loading = ref(true);
@@ -129,51 +130,45 @@ const route = useRoute();
 const filteredServices = computed(() => {
   let result = [...services.value];
 
-  // Filter by category
+  // Filter by category (using skill as category)
   if (selectedCategories.value.length > 0) {
     result = result.filter(service =>
-      selectedCategories.value.includes(service.categoryId)
+      selectedCategories.value.includes(service.skill)
     );
   }
 
   // Filter by price
   if (priceMin.value !== '') {
     const min = parseFloat(priceMin.value);
-    result = result.filter(service => {
-      const price = extractPrice(service.price);
-      return price >= min;
-    });
+    result = result.filter(service => parseFloat(service.price) >= min);
   }
 
   if (priceMax.value !== '') {
     const max = parseFloat(priceMax.value);
-    result = result.filter(service => {
-      const price = extractPrice(service.price);
-      return price <= max;
-    });
+    result = result.filter(service => parseFloat(service.price) <= max);
   }
 
-  // Filter by rating
+  // Filter by rating (assuming we don't have rating data yet)
   if (selectedRatings.value.length > 0) {
     const minRating = Math.min(...selectedRatings.value);
-    result = result.filter(service => service.rating >= minRating);
+    result = result.filter(service => (service.rating || 0) >= minRating);
   }
 
   // Sort results
   switch (sortBy.value) {
     case 'price_low':
-      result.sort((a, b) => extractPrice(a.price) - extractPrice(b.price));
+      result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
       break;
     case 'price_high':
-      result.sort((a, b) => extractPrice(b.price) - extractPrice(a.price));
+      result.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
       break;
     case 'rating':
-      result.sort((a, b) => b.rating - a.rating);
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       break;
     case 'popularity':
     default:
-      // Assuming popularity is based on review count
-      result.sort((a, b) => b.reviews - a.reviews);
+      // Using created_at as a proxy for popularity (newer = more popular)
+      result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       break;
   }
 
@@ -181,51 +176,44 @@ const filteredServices = computed(() => {
 });
 
 // Methods
-const extractPrice = (priceString) => {
-  const match = priceString.match(/Rs\.\s*([\d,]+)/);
-  if (match && match[1]) {
-    return parseFloat(match[1].replace(/,/g, ''));
-  }
-  return 0;
-};
-
 const fetchServices = async () => {
   loading.value = true;
   try {
-    setTimeout(() => {
-      services.value = [
-        { id: 1, title: 'Plumbing Services', provider: 'John Plumber', providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg', categoryId: 2, categoryName: 'Home Repairs', rating: 4.8, reviews: 124, price: 'From Rs. 2,500/hr', image: 'https://via.placeholder.com/300x200?text=Plumbing' },
-        { id: 2, title: 'Electrical Repairs', provider: 'ElectroFix', providerAvatar: 'https://randomuser.me/api/portraits/men/45.jpg', categoryId: 2, categoryName: 'Home Repairs', rating: 4.7, reviews: 98, price: 'From Rs. 3,000/hr', image: 'https://via.placeholder.com/300x200?text=Electrical' },
-        { id: 3, title: 'House Cleaning', provider: 'CleanHome', providerAvatar: 'https://randomuser.me/api/portraits/women/28.jpg', categoryId: 7, categoryName: 'Personal Service', rating: 4.9, reviews: 156, price: 'From Rs. 2,000/hr', image: 'https://via.placeholder.com/300x200?text=Cleaning' },
-        { id: 4, title: 'AC Installation', provider: 'CoolAir', providerAvatar: 'https://randomuser.me/api/portraits/men/22.jpg', categoryId: 8, categoryName: 'Home Improvement', rating: 4.6, reviews: 87, price: 'From Rs. 5,000/hr', image: 'https://via.placeholder.com/300x200?text=AC+Installation' },
-        { id: 5, title: 'Car Repair', provider: 'AutoFix', providerAvatar: 'https://randomuser.me/api/portraits/men/36.jpg', categoryId: 1, categoryName: 'Automobile', rating: 4.5, reviews: 112, price: 'From Rs. 3,500/hr', image: 'https://via.placeholder.com/300x200?text=Car+Repair' },
-        { id: 6, title: 'Pet Grooming', provider: 'PetCare', providerAvatar: 'https://randomuser.me/api/portraits/women/42.jpg', categoryId: 3, categoryName: 'Pet Care', rating: 4.8, reviews: 95, price: 'From Rs. 1,800/hr', image: 'https://via.placeholder.com/300x200?text=Pet+Grooming' },
-        { id: 7, title: 'Yoga Instructor', provider: 'YogaLife', providerAvatar: 'https://randomuser.me/api/portraits/women/15.jpg', categoryId: 5, categoryName: 'Health & Wellness', rating: 4.9, reviews: 78, price: 'From Rs. 2,200/hr', image: 'https://via.placeholder.com/300x200?text=Yoga' },
-        { id: 8, title: 'Web Development', provider: 'TechSolutions', providerAvatar: 'https://randomuser.me/api/portraits/men/67.jpg', categoryId: 6, categoryName: 'Tech and Digital', rating: 4.7, reviews: 64, price: 'From Rs. 4,500/hr', image: 'https://via.placeholder.com/300x200?text=Web+Dev' }
-      ];
-      loading.value = false;
-    }, 500);
+    const response = await axios.get('http://localhost:8000/services/services');
+    services.value = response.data.map(service => ({
+      id: service.id,
+      title: service.title,
+      provider: service.provider,
+      providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg', // Default avatar
+      categoryId: service.skill, // Using skill as category
+      categoryName: service.skill,
+      rating: service.rating || 0, // Default rating if not provided
+      reviews: service.reviews || 0, // Default reviews if not provided
+      price: `Rs. ${parseFloat(service.price).toLocaleString('en-IN')}`,
+      image: 'https://via.placeholder.com/300x200?text=' + service.title.replace(/\s+/g, '+'),
+      description: service.description,
+      is_available: service.is_available
+    }));
   } catch (error) {
     console.error('Error fetching services:', error);
+    services.value = []; // Set empty array on error
+  } finally {
     loading.value = false;
   }
 };
 
 const fetchCategories = async () => {
   try {
-    categories.value = [
-      { id: 1, name: 'Automobile', slug: 'automobile' },
-      { id: 2, name: 'Home Repairs', slug: 'home-repairs' },
-      { id: 3, name: 'Pet Care', slug: 'pet-care' },
-      { id: 4, name: 'Professional Services', slug: 'professional' },
-      { id: 5, name: 'Health & Wellness', slug: 'health' },
-      { id: 6, name: 'Tech and Digital', slug: 'tech' },
-      { id: 7, name: 'Personal Service', slug: 'personal' },
-      { id: 8, name: 'Home Improvement', slug: 'home-improvement' },
-      { id: 9, name: 'Professional Trainings', slug: 'training' }
-    ];
+    const response = await axios.get('http://localhost:8000/services/services');
+    const uniqueSkills = [...new Set(response.data.map(service => service.skill))];
+    categories.value = uniqueSkills.map((skill, index) => ({
+      id: skill,
+      name: skill,
+      slug: skill.toLowerCase().replace(/\s+/g, '-')
+    }));
   } catch (error) {
     console.error('Error fetching categories:', error);
+    categories.value = [];
   }
 };
 
@@ -272,7 +260,6 @@ watch(() => route.params.category, (newCategorySlug, oldCategorySlug) => {
   }
 });
 </script>
-
 
 <style scoped>
 .services-page {
