@@ -189,6 +189,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import {registerUser} from '../services/api'; // Import your API function for registration
 
 // Reactive references for form and state
 const form = ref({
@@ -211,7 +212,7 @@ const togglePassword = () => {
 };
 
 // Handle registration
-const handleRegister = () => {
+const handleRegister = async() => {
   // Validate passwords match
   if (form.value.password !== form.value.confirmPassword) {
     alert('Passwords do not match');
@@ -221,27 +222,25 @@ const handleRegister = () => {
   isLoading.value = true;
   error.value = null;
 
-  // Simulate API call for registration
-  setTimeout(() => {
-    // In a real app, you would make an API call to register the user
-    // For demo purposes, we'll just simulate a successful registration
-    const userData = {
-      id: 1,
+  try{
+    const payload={
       firstName: form.value.firstName,
       lastName: form.value.lastName,
       email: form.value.email,
-      token: 'sample-jwt-token'
+      phone: form.value.phone,
+      password: form.value.password
     };
+    const response = await registerUser(payload); // Call your API function
 
-    // Store token in localStorage
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('user', JSON.stringify(userData));
-
-    isLoading.value = false;
-
-    // Redirect to home page after successful registration
+    localStorage.setItem('token', response.data.token); // Store token in localStorage
+    localStorage.setItem('user', JSON.stringify(response.data)); // Store user data in localStorage
     router.push('/');
-  }, 1500);
+  } catch(err){
+    console.error('Registration failed:',err.response?.data || err.message);
+    alert('Registration failed. Please try again.');
+  } finally{
+    isLoading.value = false;
+  }
 };
 </script>
 

@@ -1,5 +1,4 @@
-```vue type="vue" project="SwiftService" file="src/views/Profile.vue"
-[v0-no-op-code-block-prefix]<template>
+<template>
   <main class="profile-page">
     <div class="container">
       <div class="profile-header">
@@ -42,31 +41,7 @@
               Security
             </button>
             
-            <button 
-              class="profile-menu-item" 
-              :class="{ 'active': activeTab === 'preferences' }"
-              @click="activeTab = 'preferences'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-              Preferences
-            </button>
-            
-            <button 
-              class="profile-menu-item" 
-              :class="{ 'active': activeTab === 'bookings' }"
-              @click="activeTab = 'bookings'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              My Bookings
-            </button>
+            <!-- Removed the Preferences button -->
           </div>
         </div>
         
@@ -237,64 +212,6 @@
             </form>
           </div>
           
-          <!-- Preferences Tab -->
-          <div v-if="activeTab === 'preferences'" class="profile-tab">
-            <h2>Preferences</h2>
-            <p class="tab-description">Manage your notification and account preferences</p>
-            
-            <form @submit.prevent="updatePreferences" class="profile-form">
-              <div class="form-section">
-                <h3>Notifications</h3>
-                
-                <div class="form-group checkbox-group">
-                  <input type="checkbox" id="emailNotifications" v-model="preferences.emailNotifications" />
-                  <label for="emailNotifications">Email Notifications</label>
-                  <p class="input-hint">Receive booking confirmations, reminders, and updates via email</p>
-                </div>
-                
-                <div class="form-group checkbox-group">
-                  <input type="checkbox" id="smsNotifications" v-model="preferences.smsNotifications" />
-                  <label for="smsNotifications">SMS Notifications</label>
-                  <p class="input-hint">Receive booking confirmations, reminders, and updates via SMS</p>
-                </div>
-                
-                <div class="form-group checkbox-group">
-                  <input type="checkbox" id="marketingEmails" v-model="preferences.marketingEmails" />
-                  <label for="marketingEmails">Marketing Emails</label>
-                  <p class="input-hint">Receive promotional offers, discounts, and newsletters</p>
-                </div>
-              </div>
-              
-              <div class="form-section">
-                <h3>Language and Region</h3>
-                
-                <div class="form-group">
-                  <label for="language">Language</label>
-                  <select id="language" v-model="preferences.language">
-                    <option value="en">English</option>
-                    <option value="ne">Nepali</option>
-                  </select>
-                </div>
-                
-                <div class="form-group">
-                  <label for="defaultLocation">Default Location</label>
-                  <select id="defaultLocation" v-model="preferences.defaultLocation">
-                    <option v-for="location in locations" :key="location" :value="location">
-                      {{ location }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-              
-              <div class="form-actions">
-                <button type="submit" class="save-button" :disabled="isPreferencesLoading">
-                  <span v-if="isPreferencesLoading">Saving...</span>
-                  <span v-else>Save Preferences</span>
-                </button>
-              </div>
-            </form>
-          </div>
-          
           <!-- Bookings Tab -->
           <div v-if="activeTab === 'bookings'" class="profile-tab">
             <h2>My Bookings</h2>
@@ -446,7 +363,6 @@ import { useRouter } from 'vue-router';
 const activeTab = ref('personal');
 const isLoading = ref(false);
 const isPasswordLoading = ref(false);
-const isPreferencesLoading = ref(false);
 const showCurrentPassword = ref(false);
 const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
@@ -463,13 +379,6 @@ const passwordForm = ref({
   newPassword: '',
   confirmPassword: ''
 });
-const preferences = ref({
-  emailNotifications: true,
-  smsNotifications: true,
-  marketingEmails: false,
-  language: 'en',
-  defaultLocation: 'Kathmandu'
-});
 const locations = ref([
   'Kathmandu',
   'Pokhara',
@@ -482,7 +391,9 @@ const locations = ref([
   'Nepalgunj',
   'Itahari'
 ]);
-const bookings = ref([
+
+
+bookings = ref([
   {
     id: 'BK-1001',
     serviceName: 'Home Cleaning',
@@ -629,15 +540,7 @@ const updatePassword = () => {
   }, 1500);
 };
 
-const updatePreferences = () => {
-  isPreferencesLoading.value = true;
-
-  // Simulate API call to update preferences
-  setTimeout(() => {
-    isPreferencesLoading.value = false;
-    alert('Preferences updated successfully!');
-  }, 1500);
-};
+// Removed the updatePreferences function
 
 const cancelBooking = (bookingId) => {
   if (confirm('Are you sure you want to cancel this booking?')) {
@@ -788,7 +691,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--secondary);
-  margin: 0 0 0.5rem 0;
+  margin-bottom: 0.5rem;
 }
 
 .tab-description {

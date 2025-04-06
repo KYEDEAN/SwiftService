@@ -237,42 +237,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import axios from 'axios';
 
 // Reactive references for service and state
 const route = useRoute();
 const serviceId = ref(route.params.id);
-const service = ref({
-  id: 1,
-  title: 'Professional Plumbing Services',
-  categoryName: 'Home Repairs',
-  categorySlug: 'home-repairs',
-  provider: 'John Smith',
-  providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-  providerRating: 4.8,
-  providerJoined: 'Member since 2019',
-  providerJobs: 245,
-  providerHours: 1240,
-  providerYears: 5,
-  rating: 4.7,
-  reviews: 124,
-  price: 'From Rs. 2,500/hr',
-  image: 'https://via.placeholder.com/600x400?text=Plumbing+Service',
-  images: [
-    'https://via.placeholder.com/600x400?text=Plumbing+Service',
-    'https://via.placeholder.com/600x400?text=Plumbing+Image+2',
-    'https://via.placeholder.com/600x400?text=Plumbing+Image+3',
-    'https://via.placeholder.com/600x400?text=Plumbing+Image+4'
-  ],
-  description: 'Our professional plumbing services cover all your needs from fixing leaky faucets to complete bathroom renovations. With over 5 years of experience, we provide reliable, high-quality service at competitive rates. Our team of certified plumbers is available 7 days a week for both emergency repairs and scheduled maintenance.',
-  features: [
-    'Licensed and insured professionals',
-    'Available 7 days a week',
-    'Emergency services available',
-    'Free estimates',
-    'Guaranteed workmanship',
-    'Competitive pricing'
-  ]
-});
+const service = ref({});
 const activeTab = ref('reviews');
 const tabs = ref([
   { id: 'reviews', name: 'Reviews' },
@@ -339,9 +309,39 @@ const timeSlots = ref([
 // Fetch service details
 const fetchServiceDetails = async () => {
   try {
-    // In a real app, this would fetch from your API
-    // const response = await getServiceDetails(serviceId.value);
-    // service.value = response.data;
+    const response = await axios.get(`http://localhost:8000/services/services/${serviceId.value}/`);
+    service.value = {
+      id: response.data.id,
+      title: response.data.title,
+      categoryName: response.data.category, // From API response
+      categorySlug: response.data.category.toLowerCase().replace(/\s+/g, '-'), // Derive slug
+      provider: response.data.provider,
+      providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg', // Replace with actual data if available
+      providerRating: response.data.provider_rating || 4.8, // Replace with actual data
+      providerJoined: response.data.provider_joined || 'Member since 2019', // Replace with actual data
+      providerJobs: response.data.provider_jobs || 245, // Replace with actual data
+      providerHours: response.data.provider_hours || 1240, // Replace with actual data
+      providerYears: response.data.provider_years || 5, // Replace with actual data
+      rating: response.data.rating || 4.7, // Replace with actual data
+      reviews: response.data.reviews || 124, // Replace with actual data
+      price: `From Rs. ${parseFloat(response.data.price).toLocaleString('en-IN')}/hr`,
+      image: 'https://via.placeholder.com/600x400?text=' + response.data.title.replace(/\s+/g, '+'), // Replace with actual image
+      images: [
+        'https://via.placeholder.com/600x400?text=' + response.data.title.replace(/\s+/g, '+'),
+        'https://via.placeholder.com/600x400?text=Image+2',
+        'https://via.placeholder.com/600x400?text=Image+3',
+        'https://via.placeholder.com/600x400?text=Image+4'
+      ], // Replace with actual images
+      description: response.data.description || 'No description available',
+      features: response.data.features || [
+        'Licensed and insured professionals',
+        'Available 7 days a week',
+        'Emergency services available',
+        'Free estimates',
+        'Guaranteed workmanship',
+        'Competitive pricing'
+      ] // Replace with actual features
+    };
   } catch (error) {
     console.error('Error fetching service details:', error);
   }
@@ -352,28 +352,40 @@ const getRandomPercentage = () => Math.floor(Math.random() * 100);
 const getRandomReviewCount = () => Math.floor(Math.random() * 50);
 
 // Book service method
-const bookService = () => {
+const bookService = async () => {
   if (!bookingDate.value || !bookingTime.value) {
     alert('Please select both date and time for your booking.');
     return;
   }
 
-  // In a real app, this would send the booking data to your API
-  console.log('Booking service with the following details:', {
-    serviceId: serviceId.value,
-    date: bookingDate.value,
-    time: bookingTime.value,
-    notes: bookingNotes.value
-  });
+  try {
+    const token = localStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    };
 
-  alert('Your booking has been submitted successfully!');
+    const bookingData = {
+      service_id: serviceId.value,
+      date: bookingDate.value,
+      time: bookingTime.value,
+      notes: bookingNotes.value,
+    };
 
-  // Reset form
-  bookingDate.value = '';
-  bookingTime.value = '';
-  bookingNotes.value = '';
+    // Update the endpoint to /services/bookings/create/
+    await axios.post(`${API_URL}/bookings/create/`, bookingData, config);
+    alert('Your booking has been submitted successfully!');
+
+    bookingDate.value = '';
+    bookingTime.value = '';
+    bookingNotes.value = '';
+  } catch (error) {
+    console.error('Error booking service:', error);
+    alert('Failed to book the service. Please try again.');
+  }
 };
-
 // Lifecycle hook
 onMounted(() => {
   fetchServiceDetails();

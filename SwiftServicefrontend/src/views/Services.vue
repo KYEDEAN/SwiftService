@@ -1,3 +1,4 @@
+<!-- Services.vue -->
 <template>
   <main class="services-page">
     <div class="container">
@@ -81,6 +82,11 @@
             <p>Loading services...</p>
           </div>
           
+          <div v-else-if="error" class="error-container">
+            <p>{{ error }}</p>
+            <button class="reset-button" @click="fetchServices">Retry</button>
+          </div>
+          
           <div v-else-if="filteredServices.length === 0" class="no-results">
             <p>No services found matching your filters.</p>
             <button class="reset-button" @click="resetFilters">Reset Filters</button>
@@ -101,12 +107,13 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import ServiceCard from '../components/ServiceCard.vue';
 
 // Reactive references
 const loading = ref(true);
+const error = ref(null);
 const services = ref([]);
 const categories = ref([]);
 const selectedCategories = ref([]);
@@ -123,100 +130,134 @@ const ratings = ref([
 ]);
 const categoryFromRoute = ref(null);
 
-// Route info
+// Route and router
 const route = useRoute();
+const router = useRouter();
 
-// Computed property to filter services
-const filteredServices = computed(() => {
-  let result = [...services.value];
+// Base API URL
+const API_URL = 'http://localhost:8000/services';
 
-  // Filter by category (using skill as category)
-  if (selectedCategories.value.length > 0) {
-    result = result.filter(service =>
-      selectedCategories.value.includes(service.skill)
-    );
+// Fetch categories from the backend
+const fetchCategories = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    };
+
+    const response = await axios.get(`${API_URL}/categories/`, config);
+    console.log('Categories response:', response.data);
+    categories.value = response.data.map(category => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug
+    }));
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    categories.value = [];
   }
+};
 
-  // Filter by price
-  if (priceMin.value !== '') {
-    const min = parseFloat(priceMin.value);
-    result = result.filter(service => parseFloat(service.price) >= min);
-  }
-
-  if (priceMax.value !== '') {
-    const max = parseFloat(priceMax.value);
-    result = result.filter(service => parseFloat(service.price) <= max);
-  }
-
-  // Filter by rating (assuming we don't have rating data yet)
-  if (selectedRatings.value.length > 0) {
-    const minRating = Math.min(...selectedRatings.value);
-    result = result.filter(service => (service.rating || 0) >= minRating);
-  }
-
-  // Sort results
-  switch (sortBy.value) {
-    case 'price_low':
-      result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-      break;
-    case 'price_high':
-      result.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-      break;
-    case 'rating':
-      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
-    case 'popularity':
-    default:
-      // Using created_at as a proxy for popularity (newer = more popular)
-      result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      break;
-  }
-
-  return result;
-});
-
-// Methods
+// Fetch services from the backend
 const fetchServices = async () => {
   loading.value = true;
+  error.value = null;
+
   try {
-    const response = await axios.get('http://localhost:8000/services/services');
+    const token = localStorage.getItem('token');
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    };
+
+    let url = `${API_URL}/services/`;
+    // Remove server-side category filtering for now
+    const response = await axios.get(url, config);
+    console.log('Services response:', response.data);
     services.value = response.data.map(service => ({
       id: service.id,
       title: service.title,
       provider: service.provider,
-      providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg', // Default avatar
-      categoryId: service.skill, // Using skill as category
-      categoryName: service.skill,
-      rating: service.rating || 0, // Default rating if not provided
-      reviews: service.reviews || 0, // Default reviews if not provided
-      price: `Rs. ${parseFloat(service.price).toLocaleString('en-IN')}`,
+      providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      categoryId: service.skill, // Use skill directly
+      categoryName: service.skill, // Use skill directly
+      rating: service.rating || 0,
+      reviews: service.reviews || 0,
+      price: parseFloat(service.price),
+      displayPrice: `Rs. ${parseFloat(service.price).toLocaleString('en-IN')}`,
       image: 'https://via.placeholder.com/300x200?text=' + service.title.replace(/\s+/g, '+'),
-      description: service.description,
-      is_available: service.is_available
+      description: service.description || 'No description available',
+      is_available: service.is_available // Fix the field name
     }));
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    services.value = []; // Set empty array on error
+  } catch (err) {
+    console.error('Error fetching services:', err);
+    error.value = err.message || 'Failed to load services. Please try again.';
+    services.value = [];
   } finally {
     loading.value = false;
   }
 };
 
-const fetchCategories = async () => {
-  try {
-    const response = await axios.get('http://localhost:8000/services/services');
-    const uniqueSkills = [...new Set(response.data.map(service => service.skill))];
-    categories.value = uniqueSkills.map((skill, index) => ({
-      id: skill,
-      name: skill,
-      slug: skill.toLowerCase().replace(/\s+/g, '-')
-    }));
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    categories.value = [];
-  }
-};
+// Computed property to filter services
+const filteredServices = computed(() => {
+  let result = [...services.value];
 
+  // Filter by categories (client-side)
+  if (selectedCategories.value.length > 0) {
+    const categoryNames = categories.value
+      .filter(category => selectedCategories.value.includes(category.id))
+      .map(category => category.name);
+    result = result.filter(service => categoryNames.includes(service.categoryName));
+  }
+
+  // Filter by price range
+  if (priceMin.value !== '') {
+    const min = parseFloat(priceMin.value);
+    result = result.filter(service => service.price >= min);
+  }
+
+  if (priceMax.value !== '') {
+    const max = parseFloat(priceMax.value);
+    result = result.filter(service => service.price <= max);
+  }
+
+  // Filter by rating
+  if (selectedRatings.value.length > 0) {
+    const minRating = Math.min(...selectedRatings.value);
+    result = result.filter(service => service.rating >= minRating);
+  }
+
+  // Sort services
+  switch (sortBy.value) {
+    case 'price_low':
+      result.sort((a, b) => a.price - b.price);
+      break;
+    case 'price_high':
+      result.sort((a, b) => b.price - a.price);
+      break;
+    case 'rating':
+      result.sort((a, b) => b.rating - a.rating);
+      break;
+    case 'popularity':
+    default:
+      // Assuming the API returns services ordered by popularity by default
+      break;
+  }
+
+  const finalResult = result.map(service => ({
+    ...service,
+    price: service.displayPrice
+  }));
+  console.log('filteredServices:', finalResult);
+  return finalResult;
+});
+
+// Methods
 const resetFilters = () => {
   selectedCategories.value = categoryFromRoute.value ? [categoryFromRoute.value] : [];
   priceMin.value = '';
@@ -240,23 +281,30 @@ const checkSearchQuery = () => {
   const query = route.query.q;
   if (query) {
     console.log('Search query:', query);
+    // Implement search filtering if needed
   }
 };
 
-// Lifecycle hooks
-onMounted(async () => {
-  await fetchCategories();
-  await fetchServices();
-  checkCategoryFromRoute();
-  checkSearchQuery();
+// Watch for changes in selected categories to refetch services
+watch(selectedCategories, () => {
+  // Since we're filtering client-side, no need to refetch
 });
 
-// Watch for route changes
+// Lifecycle hooks
+onMounted(async () => {
+  console.log('onMounted triggered');
+  await fetchCategories();
+  checkCategoryFromRoute();
+  checkSearchQuery();
+  await fetchServices();
+});
+
 watch(() => route.params.category, (newCategorySlug, oldCategorySlug) => {
   if (newCategorySlug !== oldCategorySlug) {
     resetFilters();
     checkCategoryFromRoute();
     checkSearchQuery();
+    fetchServices();
   }
 });
 </script>
@@ -423,7 +471,9 @@ watch(() => route.params.category, (newCategorySlug, oldCategorySlug) => {
   min-height: 400px;
 }
 
-.loading-container {
+.loading-container,
+.error-container,
+.no-results {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -445,11 +495,7 @@ watch(() => route.params.category, (newCategorySlug, oldCategorySlug) => {
   to { transform: rotate(360deg); }
 }
 
-.no-results {
-  text-align: center;
-  padding: 3rem 0;
-}
-
+.error-container p,
 .no-results p {
   margin-bottom: 1.5rem;
   color: #666;
