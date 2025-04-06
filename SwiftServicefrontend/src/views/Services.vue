@@ -168,15 +168,19 @@ const fetchServices = async () => {
 
   try {
     const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        Authorization: `Bearer ${token}`,
       },
     };
 
     let url = `${API_URL}/services/`;
-    // Remove server-side category filtering for now
     const response = await axios.get(url, config);
     console.log('Services response:', response.data);
     services.value = response.data.map(service => ({
@@ -184,19 +188,23 @@ const fetchServices = async () => {
       title: service.title,
       provider: service.provider,
       providerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      categoryId: service.skill, // Use skill directly
-      categoryName: service.skill, // Use skill directly
+      categoryId: service.skill,
+      categoryName: service.skill,
       rating: service.rating || 0,
       reviews: service.reviews || 0,
       price: parseFloat(service.price),
       displayPrice: `Rs. ${parseFloat(service.price).toLocaleString('en-IN')}`,
       image: 'https://via.placeholder.com/300x200?text=' + service.title.replace(/\s+/g, '+'),
       description: service.description || 'No description available',
-      is_available: service.is_available // Fix the field name
+      is_available: service.is_available
     }));
   } catch (err) {
     console.error('Error fetching services:', err);
-    error.value = err.message || 'Failed to load services. Please try again.';
+    if (err.response && err.response.status === 401) {
+      router.push('/login');
+    } else {
+      error.value = err.message || 'Failed to load services. Please try again.';
+    }
     services.value = [];
   } finally {
     loading.value = false;
@@ -245,7 +253,6 @@ const filteredServices = computed(() => {
       break;
     case 'popularity':
     default:
-      // Assuming the API returns services ordered by popularity by default
       break;
   }
 
@@ -281,7 +288,6 @@ const checkSearchQuery = () => {
   const query = route.query.q;
   if (query) {
     console.log('Search query:', query);
-    // Implement search filtering if needed
   }
 };
 

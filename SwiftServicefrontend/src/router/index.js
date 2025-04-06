@@ -3,9 +3,9 @@ import Home from '../views/Home.vue'
 import Services from '../views/Services.vue'
 import ServiceDetails from '../views/ServiceDetail.vue'
 import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
 import ProviderRegistration from '../views/ProviderRegistration.vue'
 import Profile from '../views/Profile.vue'
+import Signup from '@/views/Signup.vue'
 
 const routes = [
   {
@@ -31,7 +31,7 @@ const routes = [
   {
     path: '/register',
     name: 'Register',
-    component: Register
+    component: Signup
   },
   {
     path: '/provider-registration',
